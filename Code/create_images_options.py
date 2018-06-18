@@ -5,6 +5,7 @@
 Generates images from either FASTA files or Simulation txt/gzip files
 
 NOTE: Simulation Files are assumed to all be in the same folder(no sub folders)
+#python version 2.17
 """
 
 __author__ = 'Lucrezia Lorenzon (EMAIL_HERE)'
