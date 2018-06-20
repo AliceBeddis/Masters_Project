@@ -135,6 +135,7 @@ for filename in os.listdir(simulation_folder):
 		NITER = substring_after(first_line, '-N', 2)
 		SAA = substring_after(first_line, '-SAA',0)
 		SAa = substring_after(first_line, '-SAa',0)
+		Saa = substring_after(first_line, '-Saa',0)
 		P_Recombination = substring_after(first_line, '-r',0)
 		no_recom_sites = substring_after(first_line, '-r',1)
 		t = substring_after(first_line, '-t',0)
@@ -142,7 +143,7 @@ for filename in os.listdir(simulation_folder):
 		modication_stamp = modification_date(string)
 		active = 'active' # This allows deleted files to be tracked in json folder
 		#Create Dictionary of simulation specific paramters
-		dictionary_temp = createDict('name','no_recom_sites','P_Recombination', 'NREF', 'NCHROM','NITER','SAA','SAa', 't','modication_stamp','active')
+		dictionary_temp = createDict('name','no_recom_sites','P_Recombination', 'NREF', 'NCHROM','NITER','SAA','SAa','Saa', 't','modication_stamp','active')
 		#For each simulation file, append its specific dictionary to a list
 		simulations.append(dictionary_temp)
 
