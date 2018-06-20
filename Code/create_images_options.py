@@ -837,8 +837,8 @@ def image_simulation(path1,path2,S, N, file_name, NCHROMS, threshold, apply_thre
 	
 				#Black and white image:
 				#Simulation File: 0 = ancestrial, 1 = Derived (White encoded by 1, Black encoded by 0)
-				#If the major allele is 1, we want to change 0 with 1 and vice verasa (0 = Major, 1 = Minor)
-				#If the major allele is 0, no changes need to be made as 0 would by default be coded to be white
+				#If the major allele is 0, we want to change 0 with 1 and vice verasa (1 = Major, 0 = Minor)
+				#If the major allele is 1, no changes need to be made as 1 would by default be coded to be white
 				matrix_maj_min_col = np.ones((n_pos,NCHROMS),dtype=int)
 				for row in range(len(transponse_array_croms)):
 					if maj_allele[row] == 1:
@@ -850,7 +850,7 @@ def image_simulation(path1,path2,S, N, file_name, NCHROMS, threshold, apply_thre
 			if maj_min == False:
 				#Black and white image:
 				#Simulation File: 0 = ancestrial, 1 = Derived (White encoded by 1, Black encoded by 0)
-				#We want the opposite: hence we need to change 0 with 1 and vice versa before producing the image
+				#We want the opposite(ancestrial = white & derived = black) : hence we need to change 0 with 1 and vice versa before producing the image
 				all1 = np.ones((NCHROMS,n_pos))
 				croms = all1 - croms
 			###########################
