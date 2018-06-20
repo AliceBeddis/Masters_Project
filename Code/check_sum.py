@@ -138,9 +138,10 @@ shared_files = list(set(old).intersection(new))
 #Suffix of g_zip files (Compressed)
 gzip_suffix = "gz" 
 #Suffix of txt files (Uncompressed)
-txt_suffix = "txt" 
-
-for new_file in new_files: 
+txt_suffix = "txt"
+suffixes = (gzip_suffix, txt_suffix )
+new_files = [x for x in new_files if x.startswith(suffixes)]
+for new_file in new_files:
 	#Path to each of the new files
 	path_new_file = simulation_folder + '/' + new_file
 	#Open the files in appropriate way and read the first line
@@ -171,6 +172,9 @@ for new_file in new_files:
 
 #For each of the removed files, set them to inactive in the index file: allows metadata to be recorded
 active = 'inactive'
+
+removed_files = [x for x in removed_files if x.startswith(suffixes)]
+
 for removed_file in removed_files: 
 	removed_dict = filter(lambda x: x.get('name') == removed_file, data)
 	removed_dict[0]['active'] = 'inactive'
@@ -187,6 +191,7 @@ for removed_file in removed_files:
 old_modification = [] 
 new_modification = []
 
+shared_files = [x for x in shared_files if x.startswith(suffixes)]
 for shared in shared_files: 
 	common_dict_old = filter(lambda x: x.get('name') == shared, data)
 	common_dict_new = filter(lambda x: x.get('name') == shared, simulation_check_sum )	
