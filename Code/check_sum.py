@@ -43,7 +43,7 @@ def getfile(filetype):
 		user_input (string) -- path to specifed files
 
 	"""
-	order = 'Type the path to the %s :' %(filetype)
+	order = 'Type the path to the %s: ' %(filetype)
 	error = 'The path to the %s entered does not exist' %(filetype)
 	user_input = raw_input(order)
 	user_input = user_input.strip()
@@ -152,16 +152,20 @@ for new_file in new_files:
 		with open(path_new_file) as f:
 			first_line = f.readline()
 	#Extract the parameter values
-	N = substring_after(first_line, '-N', 0) 
+	NREF = substring_after(first_line, '-N', 0)
 	NCHROM = substring_after(first_line, '-N', 1)
+	NITER = substring_after(first_line, '-N', 2)
 	SAA = substring_after(first_line, '-SAA',0)
 	SAa = substring_after(first_line, '-SAa',0)
+	Saa = substring_after(first_line, '-Saa',0)
+	P_Recombination = substring_after(first_line, '-r',0)
+	no_recom_sites = substring_after(first_line, '-r',1)
 	t = substring_after(first_line, '-t',0)
 	name = new_file
 	active = 'active' 
 	modication_stamp = modification_date(path_new_file)
 	#Create Dictionary of simulation specific paramters
-	dictionary_temp = createDict('name', 'N', 'NCHROM','SAA','SAa', 't','modication_stamp','active')
+	dictionary_temp = createDict('name','no_recom_sites','P_Recombination', 'NREF', 'NCHROM','NITER','SAA','SAa','Saa', 't','modication_stamp','active')
 	#Add the dictionary of new file parameter values to the index file
 	data.append(dictionary_temp)
 
@@ -216,16 +220,20 @@ if any(x != y for x, y in pairs) == True:
 			with open(modified_path) as f:
 				first_line = f.readline()
 
-		N = substring_after(first_line, '-N', 0) 
+		NREF = substring_after(first_line, '-N', 0)
 		NCHROM = substring_after(first_line, '-N', 1)
+		NITER = substring_after(first_line, '-N', 2)
 		SAA = substring_after(first_line, '-SAA',0)
 		SAa = substring_after(first_line, '-SAa',0)
+		Saa = substring_after(first_line, '-Saa',0)
+		P_Recombination = substring_after(first_line, '-r',0)
+		no_recom_sites = substring_after(first_line, '-r',1)
 		t = substring_after(first_line, '-t',0)
 		name = modified_entry
 		active = 'active' # This allows previously deleted files that perhaps have been re-created to be updated
 		modication_stamp = modification_date(simulation_folder + '/' + modified_entry)
 		#Create Dictionary of simulation specific paramters
-		dictionary_temp = createDict('name', 'N', 'NCHROM','SAA','SAa', 't','modication_stamp','active')
+		dictionary_temp = createDict('name', 'NREF', 'NITER','NCHROM','P_Recombination','no_recom_sites','Saa','SAA','SAa', 't','modication_stamp','active')
 
 		modfied_index = next((index for (index, d) in enumerate(data) if d["name"] == modified_entry), None)
 
