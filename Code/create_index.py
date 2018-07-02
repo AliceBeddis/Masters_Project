@@ -33,25 +33,29 @@ def createDict(*args):
 
 def getfile(filetype):
 	"""
-	Function to check if the input file/folder exists: if not asks for new file path until correct one found
-	
-	Keyword Arguments: 
+        Checks if the input file/folder exists: if not asks for new file path until correct one found
+        
+        Keyword Arguments:
 		filetype (string) -- type of file looking for, eg 'reference genome'
-	
-	Returns: 
+        
+        Returns:
 		user_input (string) -- path to specifed files
-
-	"""
-	order = 'Type the path to the %s :' %(filetype)
-	error = 'The path to the %s entered does not exist' %(filetype)
-	user_input = raw_input(order)
-	user_input = user_input.strip()
-	result = os.path.exists(user_input)
-	if result == False: 
-		print error
-		getfile('%s'%(filetype))  #Repeat the function recursively
-	else: 
-		return user_input
+        
+        """
+	loop = True
+	order = 'Path to the %s: ' %(filetype)
+	error = 'Path entered does not exist. Enter the path again"'
+	while loop:
+		user_input = raw_input(order)
+		user_input = user_input.strip()
+		result = os.path.exists(user_input)
+		if result == True:
+			loop = False
+			file_loc = user_input
+		
+		else: 
+			print error
+	return file_loc
 
 #def substring_after(string, flag):
 #	"""
