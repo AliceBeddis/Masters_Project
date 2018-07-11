@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Takes MSMS simulation txt files and extracts paramter values: stores in json format.
+Takes MSMS simulation txt files  or txt.gz files and extracts paramter values: stores in json format.
+- Any other file formats are ignored
 """
 
 __author__ = 'Alice Beddis'
