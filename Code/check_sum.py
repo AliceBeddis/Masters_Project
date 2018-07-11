@@ -34,25 +34,29 @@ def createDict(*args):
 
 def getfile(filetype):
 	"""
-	Function to check if the input file/folder exists: if not asks for new file path until correct one found
-	
-	Keyword Arguments: 
+        Checks if the input file/folder exists: if not asks for new file path until correct one found
+        
+        Keyword Arguments:
 		filetype (string) -- type of file looking for, eg 'reference genome'
-	
-	Returns: 
+        
+        Returns:
 		user_input (string) -- path to specifed files
-
-	"""
-	order = 'Type the path to the %s: ' %(filetype)
-	error = 'The path to the %s entered does not exist' %(filetype)
-	user_input = raw_input(order)
-	user_input = user_input.strip()
-	result = os.path.exists(user_input)
-	if result == False: 
-		print error
-		getfile('%s'%(filetype))  #Repeat the function recursively
-	else: 
-		return user_input
+        
+        """
+	loop = True
+	order = 'Path to the %s: ' %(filetype)
+	error = 'Path entered does not exist. Enter the path again"'
+	while loop:
+		user_input = raw_input(order)
+		user_input = user_input.strip()
+		result = os.path.exists(user_input)
+		if result == True:
+			loop = False
+			file_loc = user_input
+		
+		else:
+			print error
+	return file_loc
 
 def substring_after(string, flag, positions):
 	"""
@@ -140,7 +144,7 @@ gzip_suffix = "gz"
 #Suffix of txt files (Uncompressed)
 txt_suffix = "txt"
 suffixes = (gzip_suffix, txt_suffix )
-new_files = [x for x in new_files if x.startswith(suffixes)]
+new_files = [x for x in new_files if x.endswith(suffixes)]
 for new_file in new_files:
 	#Path to each of the new files
 	path_new_file = simulation_folder + '/' + new_file
@@ -177,7 +181,7 @@ for new_file in new_files:
 #For each of the removed files, set them to inactive in the index file: allows metadata to be recorded
 active = 'inactive'
 
-removed_files = [x for x in removed_files if x.startswith(suffixes)]
+removed_files = [x for x in removed_files if x.endswith(suffixes)]
 
 for removed_file in removed_files: 
 	removed_dict = filter(lambda x: x.get('name') == removed_file, data)
@@ -195,7 +199,7 @@ for removed_file in removed_files:
 old_modification = [] 
 new_modification = []
 
-shared_files = [x for x in shared_files if x.startswith(suffixes)]
+shared_files = [x for x in shared_files if x.endswith(suffixes)]
 for shared in shared_files: 
 	common_dict_old = filter(lambda x: x.get('name') == shared, data)
 	common_dict_new = filter(lambda x: x.get('name') == shared, simulation_check_sum )	
