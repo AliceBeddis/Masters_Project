@@ -1276,7 +1276,7 @@ if data_type == 3:
 		for filename in os.listdir(data_input):
 			filecounter += 1
 		#Loop through files and generate images
-		for filename in tqdm(os.listdir(data_input),total = filecounter, unit = 'files'):
+		for filename in tqdm(os.listdir(data_input),total = filecounter, unit = 'Convoltional Layers'):
 			try:
 				if filename.endswith('.txt') or filename.endswith('.gz'):
 					if not filename.startswith('.'):
