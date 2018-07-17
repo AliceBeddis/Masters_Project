@@ -750,6 +750,7 @@ def image_simulation(path1,path2,S, N, file_name, NCHROMS, threshold, apply_thre
 	simulation_error = []
 	statistics_list = []
 	dim = []
+	
 	##################################################
 	#############OPENING THE SIMULATION FILES#########
 	##################################################
@@ -766,6 +767,7 @@ def image_simulation(path1,path2,S, N, file_name, NCHROMS, threshold, apply_thre
 			file = file.splitlines(True)
 	elif file_name.endswith(txt_suffix):
 		file = open(path1 + file_name).readlines()
+
 	##################################################
 	##########INDEXING THE FILES BY INTERATION########
 	##################################################
@@ -774,151 +776,166 @@ def image_simulation(path1,path2,S, N, file_name, NCHROMS, threshold, apply_thre
 	for i, string in enumerate(file):
 		if string == '//\n':
 			find.append(i+3)
+
 	##################################################
 	###GENERATE ONE IMAGE PER SIMULATION ITERATION####
-	##################################################	
+	##################################################			
 	for ITER, pointer in enumerate(find):
-		try:
-			###########################
-			####CREATE CHROM MATRIX####
-			###########################
-			n_columns = len(list(file[pointer]))-1
-			croms = np.zeros((NCHROMS,n_columns),dtype=int)
-			for j in range(NCHROMS):
-				f = list(file[pointer + j])
-				del f[-1]
-				position_it = file[pointer - 1].split()
-				del position_it[0]
-				position_it = np.array(position_it, dtype='float')
-				position_it = position_it*N
-				F = np.array(f,dtype=int)
-				if j == 0:
-					crom_array = F
-				else:
-					crom_array = np.vstack((crom_array,F))
-				croms[j,:]=F
-			n_pos = np.size(croms,1)
+		###########################
+		####CREATE CHROM MATRIX####
+		###########################
+		#Get the number of genomic positions(determined be the number or pointers)
+		n_columns = len(list(file[pointer]))-1
+		#Intialise the empty croms matrix: of type: object
+		croms = np.empty((NCHROMS,n_columns),dtype=np.object)
+		#Fill the matrix with the simuated data
+		for j in range(NCHROMS):
+			f = list(file[pointer + j])
+			del f[-1]
+			position_it = file[pointer - 1].split()
+			del position_it[0]
+			position_it = np.array(position_it, dtype='float')
+			position_it = position_it*N
+			F = np.array(f)
+			croms[j,:]=F
+		# print np.shape(croms)
+		#Get the index positions of any potential bug: found that these bugs dont just take the value 'a' but also other numeric values
+		i,j = np.where((croms != '0') & (croms != '1') )
+		# print i
+		# print j
+		# print np.unique(j) 
+		#Delete matrix columns(genomic positions) containing bugs
+		croms = np.delete(croms,j,axis = 1)
+		#Convert string to int
+		croms = croms.astype(int)
+		#print np.shape(croms)
+		#Create crom_array: used in statistics
+		crom_array = np.copy(croms)
+		#Get the number of positions
+		n_pos = np.size(croms,1)
+		#print n_pos
+		if i.size: 
+			if np.unique(j) not in simulation_error: 
+				simulation_error.append(list(np.unique(j)))
 
-			###########################
-			#####APPLY THRESHOLD#######
-			###########################
-			if apply_threshold == True:
-				#Count the number of derived alleles at each position
-				count = croms.sum(axis=0,dtype=float)
-				#Calculate the frrequency of the drived allele for each position
-				freq = count/float(NCHROMS)
-				for i in range(n_pos):
-					if freq[i] > 0.5:
-						freq[i] = 1-freq[i]
-				#freq is now a vector that contains the minor allele frequency for each position
-				#we delete the positions in which the minor allele frequency is <= threshold
-				positions = np.where(freq<=threshold)
-				croms,n_pos,freq = delete_simulation(n_pos,croms,freq,positions)
-		
-			###########################
-			###COLOUR BY MAJOR/MINOR###
-			###########################
-			if maj_min == True:
-				#Calculate the Major and the minor allele for each position of the matrix/array
-				#Traspose the matrix/array
-				transponse_array_croms = np.transpose(croms)
-				#Record the Major and Minor allele for each allelic position
-				maj_allele = []
-				minor_allele = []
-				for i in range(len(transponse_array_croms)):
-					freq_data = np.unique(transponse_array_croms[i], return_counts = True)
-					index_max =  np.argmax(freq_data[1])
-					if index_max == 0:
-						maj_allele.append(0)
-						minor_allele.append(1)
-					if index_max == 1: 
-						maj_allele.append(1)
-						minor_allele.append(0)
+		###########################
+		#####APPLY THRESHOLD#######
+		###########################
+		if apply_threshold == True:
+			#Count the number of derived alleles at each position
+			count = croms.sum(axis=0,dtype=float)
+			#Calculate the frrequency of the drived allele for each position
+			freq = count/float(NCHROMS)
+			for i in range(n_pos):
+				if freq[i] > 0.5:
+					freq[i] = 1-freq[i]
+			#freq is now a vector that contains the minor allele frequency for each position
+			#we delete the positions in which the minor allele frequency is <= threshold
+			positions = np.where(freq<=threshold)
+			croms,n_pos,freq = delete_simulation(n_pos,croms,freq,positions)
 	
-				#Black and white image:
-				#Simulation File: 0 = ancestrial, 1 = Derived (White encoded by 1, Black encoded by 0)
-				#If the major allele is 0, we want to change 0 with 1 and vice verasa (1 = Major, 0 = Minor)
-				#If the major allele is 1, no changes need to be made as 1 would by default be coded to be white
-				matrix_maj_min_col = np.ones((n_pos,NCHROMS),dtype=int)
-				for row in range(len(transponse_array_croms)):
-					if maj_allele[row] == 1:
-						matrix_maj_min_col[row,:] = transponse_array_croms[row]
-					if maj_allele[row] == 0:
-						matrix_maj_min_col[row,:] = matrix_maj_min_col[row,:] - transponse_array_croms[row]
-				#Transpose the matrix so that the rows are the NCHROM and the columns are n_pos
-				croms = np.transpose(matrix_maj_min_col)
-			if maj_min == False:
-				#Black and white image:
-				#Simulation File: 0 = ancestrial, 1 = Derived (White encoded by 1, Black encoded by 0)
-				#We want the opposite(ancestrial = white & derived = black) : hence we need to change 0 with 1 and vice versa before producing the image
-				all1 = np.ones((NCHROMS,n_pos))
-				croms = all1 - croms
-			###########################
-			####ORDER ROWS/COLUMNS#####
-			###########################
-			if sort == 2:
-			#Sort the matrix by row (chromosome)
-				croms = order_data(croms)
+		###########################
+		###COLOUR BY MAJOR/MINOR###
+		###########################
+		if maj_min == True:
+			#Calculate the Major and the minor allele for each position of the matrix/array
+			#Traspose the matrix/array
+			transponse_array_croms = np.transpose(croms)
+			#Record the Major and Minor allele for each allelic position
+			maj_allele = list()
+			minor_allele = list()
+			for i in range(len(transponse_array_croms)):
+				freq_data = np.unique(transponse_array_croms[i], return_counts = True)
+				index_max =  np.argmax(freq_data[1])
+				if index_max == 0:
+					maj_allele.append(0)
+					minor_allele.append(1)
+				if index_max == 1: 
+					maj_allele.append(1)
+					minor_allele.append(0)
 
-			if sort == 3:
-			#Sort the matrix by column (genetic posistion) 
-				croms_transpose = croms.transpose()
-				croms_transpose = order_data(croms_transpose)
-				croms = croms_transpose.transpose()
+			#Black and white image:
+			#Simulation File: 0 = ancestrial, 1 = Derived (White encoded by 1, Black encoded by 0)
+			#If the major allele is 0, we want to change 0 with 1 and vice verasa (1 = Major, 0 = Minor)
+			#If the major allele is 1, no changes need to be made as 1 would by default be coded to be white
+			matrix_maj_min_col = np.ones((n_pos,NCHROMS),dtype=int)
+			for row in range(len(transponse_array_croms)):
+				if maj_allele[row] == 1:
+					matrix_maj_min_col[row,:] = transponse_array_croms[row]
+				if maj_allele[row] == 0:
+					matrix_maj_min_col[row,:] = matrix_maj_min_col[row,:] - transponse_array_croms[row]
+			#Transpose the matrix so that the rows are the NCHROM and the columns are n_pos
+			croms = np.transpose(matrix_maj_min_col)
+		if maj_min == False:
+			#Black and white image:
+			#Simulation File: 0 = ancestrial, 1 = Derived (White encoded by 1, Black encoded by 0)
+			#We want the opposite(ancestrial = white & derived = black) : hence we need to change 0 with 1 and vice versa before producing the image
+			all1 = np.ones((NCHROMS,n_pos))
+			croms = all1 - croms
+		
+		###########################
+		####ORDER ROWS/COLUMNS#####
+		###########################
+		if sort == 2:
+		#Sort the matrix by row (chromosome)
+			croms = order_data(croms)
 
-			if sort == 4:
-				#First: sort the matrix by row (chromosome)
-				croms = order_data(croms)
-				#Second: sort the matrix by column (genetic posistion)
-				croms_transpose = croms.transpose()
-				croms_transpose = order_data(croms_transpose)
-				croms = croms_transpose.transpose()
+		if sort == 3:
+		#Sort the matrix by column (genetic posistion) 
+			croms_transpose = croms.transpose()
+			croms_transpose = order_data(croms_transpose)
+			croms = croms_transpose.transpose()
 
-			######################
-			###IMAGE GENERATION###
-			######################			
-			#Create image from the simulations
-			bw_croms_uint8 = np.uint8(croms)
-			bw_croms_im = Image.fromarray (bw_croms_uint8*255, mode = 'L')
-			dim.append(bw_croms_im.size[0])
-			#img..selection_coefficients..NREF..ITER.bmp"
-			string = path2 + file_name + "_"+ str(ITER+1) + str(maj_min)+ str(sort) + ".bmp"
-			bw_croms_im.save(string)
-			
-			######################
-			##Summary Statistics##
-			######################
-			####THINK: DO I NEED TO CHANGE THIS IF THERE IS A MINOR/MAJOR ALLELE CONVERSION
-			n_position_it = np.size(crom_array,1)
-			freq_crom = crom_array.sum(axis=0)/NCHROMS
-			freq_crom = np.array(freq_crom)
-			positions_1 = np.where(freq_crom<0.50)
-			mask_1 = np.ones(n_position_it, dtype=bool)
-			mask_1[positions_1[0]] = False
-			freq_crom = freq_crom[mask_1]
-			n_positions_1 = np.size(freq_crom)	
-			#Calculating the summary statistics
-			haplos = np.transpose(crom_array)
-			h = allel.HaplotypeArray(haplos)
-			#tajimasd
-			ac = h.count_alleles()
-			TjD = allel.stats.tajima_d(ac)
-			#watterson
-			theta_hat_w = allel.stats.watterson_theta(position_it, ac)
-			#nsl
-			nsl = allel.nsl(h)
-			nsl = nsl[mask_1]
-			size = np.size(nsl)
-			if size == 0:
-				nsl_max = 0
-			else:
-				nsl_max = np.max(nsl)
-			#dictionary to store the statistics 
-			statistics_dictionary = {'simulation_file': file_name, 'Selection coefficient':str(S),'Population size':str(N),'Iteration':str(ITER+1), 'Tajimas D':TjD,'Watterson':theta_hat_w,'nsl':nsl_max}
-			statistics_list.append(statistics_dictionary)
-		except:
-			simulation_error.append(pointer)
-			continue
+		if sort == 4:
+			#First: sort the matrix by row (chromosome)
+			croms = order_data(croms)
+			#Second: sort the matrix by column (genetic posistion)
+			croms_transpose = croms.transpose()
+			croms_transpose = order_data(croms_transpose)
+			croms = croms_transpose.transpose()
+
+		######################
+		###IMAGE GENERATION###
+		######################			
+		#Create image from the simulations
+		bw_croms_uint8 = np.uint8(croms)
+		bw_croms_im = Image.fromarray (bw_croms_uint8*255, mode = 'L')
+		dim.append(bw_croms_im.size[0])
+		#img..selection_coefficients..NREF..ITER.bmp"
+		string = path2 + file_name + "_"+ str(ITER+1) + str(maj_min)+ str(sort) + ".bmp"
+		bw_croms_im.save(string)
+		
+		######################
+		##Summary Statistics##
+		######################
+		####THINK: DO I NEED TO CHANGE THIS IF THERE IS A MINOR/MAJOR ALLELE CONVERSION
+		n_position_it = np.size(crom_array,1)
+		freq_crom = crom_array.sum(axis=0)/NCHROMS
+		freq_crom = np.array(freq_crom)
+		positions_1 = np.where(freq_crom<0.50)
+		mask_1 = np.ones(n_position_it, dtype=bool)
+		mask_1[positions_1[0]] = False
+		freq_crom = freq_crom[mask_1]
+		n_positions_1 = np.size(freq_crom)	
+		#Calculating the summary statistics
+		haplos = np.transpose(crom_array)
+		h = allel.HaplotypeArray(haplos)
+		#tajimasd
+		ac = h.count_alleles()
+		TjD = allel.stats.tajima_d(ac)
+		#watterson
+		theta_hat_w = allel.stats.watterson_theta(position_it, ac)
+		#nsl
+		nsl = allel.nsl(h)
+		nsl = nsl[mask_1]
+		size = np.size(nsl)
+		if size == 0:
+			nsl_max = 0
+		else:
+			nsl_max = np.max(nsl)
+		#dictionary to store the statistics 
+		statistics_dictionary = {'simulation_file': file_name, 'Selection coefficient':str(S),'Population size':str(N),'Iteration':str(ITER+1), 'Tajimas D':TjD,'Watterson':theta_hat_w,'nsl':nsl_max}
+		statistics_list.append(statistics_dictionary)
 	return(simulation_error,statistics_list,dim)
 	
 ##################################################################################################
