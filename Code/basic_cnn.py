@@ -427,6 +427,13 @@ while Resize_loop_01:
 	else:
 		print("Wrong option selection. Enter your choice again")
 
+########################################################################
+#########################GET NAME TO SAVE MODEL#########################
+########################################################################
+order = 'Write the name in which to save the model'
+userInput = str(raw_input(order))
+model_file_name = os.path.splitext(userInput)[0]
+
 ############################################################################
 ############################DATA PREP#######################################
 ############################################################################
@@ -440,13 +447,12 @@ print width_screen * "-"
 print('RESIZING IMAGES'.center(width_screen)) 
 print width_screen * "-" 
 
+#If re-sized images do not already exist: resize
 list_folders = next(os.walk(simulation_images))[1]
 for folder in tqdm.tqdm(list_folders,total = len(list_folders), unit = 'folders'):
-	if not folder.startswith('resize'):
-		if not folder.startswith('.'):
-			if not folder == 'CNN_41':
-				if not folder == 'training_data':
-					resize_image(simulation_images + '/' + folder, col_size, row_size)
+	if not os.path.isdir(simulation_images + '/' + folder + "/resize_col_" + str(col_size) + "_row_" + str(row_size)):
+		resize_image(simulation_images + '/' + folder, col_size, row_size)
+
 
 #####################################################
 #####CREATING DIRECTORIES FOR CNN RESULTS############
@@ -455,12 +461,14 @@ for folder in tqdm.tqdm(list_folders,total = len(list_folders), unit = 'folders'
 CNN_dir = results_directory + '/CNN'
 #Create a Directory for training images: if does not already exist
 trianing_dir = CNN_dir + '/training_data'
-if not os.path.exists(trianing_dir):
-	os.makedirs(trianing_dir)
+if os.path.exists(trianing_dir):
+	shutil.rmtree(trianing_dir)
+os.makedirs(trianing_dir)
 #Create a Directory for testing images: if does not already exist
 testing_dir = CNN_dir + '/testing_data'
-if not os.path.exists(testing_dir):
-	os.makedirs(testing_dir)
+if os.path.exists(testing_dir):
+	shutil.rmtree(testing_dir)
+os.makedirs(testing_dir)
 
 #####################################################
 ###DEFINE DATA SPLIT: TRAINING:EVLUATION: TESTING####
@@ -539,7 +547,6 @@ index = 0
 for image in flat_full_path_training_data: 
 	open_image = np.asarray(PIL.Image.open(image)).flatten()
 	open_image = open_image.astype('float32')
-	print(open_image.shape)
 	im_matrix[index,:] = open_image
 	index += 1
 
@@ -587,13 +594,12 @@ nb_classes = num_selection_coefficients
 y_train= keras.utils.np_utils.to_categorical(y_train,nb_classes)
 y_val= keras.utils.np_utils.to_categorical(y_val,nb_classes)
 
-#Saving the split testing and training data to the CNN41 folder
-np.save(trianing_dir+ '/' + "X_train",X_train,allow_pickle=False)
-np.save(trianing_dir+ '/' + "X_val",X_val,allow_pickle=False)
-np.save(trianing_dir+ '/' + "y_train",y_train,allow_pickle=False)
-np.save(trianing_dir+ '/' + "y_vak",y_val,allow_pickle=False)
+#Saving the split testing and training data to the CNN Directory
+np.save(CNN_dir + '/' + model_file_name + "_"  + "X_train", X_train,allow_pickle=False)
+np.save(CNN_dir + '/' + model_file_name +  "_"  + "X_val", X_val,allow_pickle=False)
+np.save(CNN_dir + '/' + model_file_name  +  "_"  + "y_train", y_train,allow_pickle=False)
+np.save(CNN_dir + '/' + model_file_name  +  "_"  + "y_val", y_val,allow_pickle=False)
 del im_matrix, label
-
 
 ############################################################################
 ############################CNN ARCHITECTURE################################
@@ -679,6 +685,16 @@ CNN.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accurac
 #Fitting the model as before
 hist = CNN.fit(X_train, y_train, batch_size=batch_size_parameter, epochs=epochs, verbose=1, validation_data=(X_val, y_val))
 
+########################################################################
+##################################SAVE MODEL############################
+########################################################################
+
+CNN.save(CNN_dir +'/'+ model_file_name +'.h5')
+
+#Save the class_label association
+with open(CNN_dir +'/'+ model_file_name + '_class_label_association.json', 'w') as fp:
+	json.dump(class_label_dict, fp)
+
 ######################################################
 ########CONVOLUTIONAL NEURAL NETWORK:PLOT TRAINING#####
 #######################################################
@@ -693,7 +709,7 @@ hist_df.plot(ax=ax)
 ax.set_ylabel('Accuracy/Loss')
 ax.set_xlabel('# epochs')
 #ax.set_ylim(.99*hist_df[1:].values.min(), 1.1*hist_df[1:].values.max())
-plt.savefig(CNN_dir + "/loss_acc_basic_script.pdf")
+plt.savefig(CNN_dir +'/' + model_file_name + "_loss_acc.pdf")
 
 
 #######################################################
@@ -751,8 +767,8 @@ X_test_data /= 255
 nb_classes = num_selection_coefficients
 y_test_data= keras.utils.np_utils.to_categorical(label,nb_classes)
 #Save the testing and training data
-np.save(testing_dir + '/' + "x_test",X_test_data,allow_pickle=False)
-np.save(testing_dir + '/' + "y_test",y_test_data,allow_pickle=False)
+np.save(CNN_dir + '/' + "x_test" + "_" +  model_file_name ,X_test_data,allow_pickle=False)
+np.save(CNN_dir + '/' + "y_test" + "_" +  model_file_name ,y_test_data,allow_pickle=False)
 
 #Evaluate the model using unseen testing data
 score = CNN.evaluate(X_test_data ,y_test_data, batch_size = None, verbose=1)
@@ -865,7 +881,7 @@ plt.yticks(cen_tick, sel_sorted,rotation=45, fontsize=8)
 plt.ylabel('True label')
 plt.xlabel('Predicted label')
 #Save the plot
-plt.savefig(CNN_dir +'/'+ "Confusion Matrix.pdf",bbox_inches='tight')
+plt.savefig(CNN_dir +'/'+ model_file_name + "_" + "Confusion Matrix.pdf",bbox_inches='tight')
 plt.clf()
 plt.cla()
 plt.close()
@@ -877,15 +893,4 @@ selection_coefficients_str = map(str, class_label_dict.values())
 cr = classification_report(y_truth, y_pred, labels= class_label_dict.keys(), target_names = selection_coefficients_str )
 classification_report_csv(cr)
 
-########################################################################
-##################################SAVE MODEL############################
-########################################################################
 
-order = 'Write the name in which to save the model '
-userInput = str(raw_input(order))
-file_name = os.path.splitext(userInput)[0]
-CNN.save(CNN_dir +'/'+ file_name + '.h5')
-
-#Save the class_label association
-with open(CNN_dir +'/'+ file_name + '_class_label_association.json', 'w') as fp:
-    json.dump(class_label_dict, fp)
