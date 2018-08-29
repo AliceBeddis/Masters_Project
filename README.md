@@ -18,16 +18,20 @@ Tensorflow: version 1.9.0
 Program assumes a basic Code, Data, Results directory strucutre. 
 
 Code: Contains scripts for analysis: either the stand alone scripts or scripts for running the program(run_script_2.sh). 
+
 Data: Contains MSMS or FASTA files. The index file(containing parameters used for all MSMS simulations) will also be stored in this directory.
+
 Results:
-        simulation_data: directory created when running scripts. Contains images created from simulation files. 
-        real_data: directory created when running scripts. Contains images created from real data. 
-        CNN: directory created when running scripts: Contains all files created when running CNN analysis. 
+  * simulation_data: directory created when running scripts. Contains images created from simulation files. 
+  * real_data: directory created when running scripts. Contains images created from real data. 
+  * CNN: directory created when running scripts: Contains all files created when running CNN analysis. 
         
-Running basic program( Code/program_scripts/run_script_2.sh):
+Running basic program(Code/program_scripts/run_script_2.sh)
 
 Program is ran in the terminal.
+
 The working directory must be the directory in which all program scripts are contained, eg. Code/program_scripts
+
 Simply run the run_script_2.sh script.
 
 ## Authors
