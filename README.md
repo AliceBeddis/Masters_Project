@@ -36,5 +36,6 @@ Simply run the run_script_2.sh script.
 
 ## Authors
 Preliminary Scripts were provided by Lucrezia Lorenzon. 
-These scripts were build upon by Alice Beddis
+
+These scripts were built upon by Alice Beddis
 
