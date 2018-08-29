@@ -35,5 +35,6 @@ The working directory must be the directory in which all program scripts are con
 Simply run the run_script_2.sh script.
 
 ## Authors
-
+Preliminary Scripts were provided by Lucrezia Lorenzon. 
+These scripts were build upon by Alice Beddis
 
